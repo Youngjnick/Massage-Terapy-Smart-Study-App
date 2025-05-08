@@ -1,16 +1,14 @@
 // Core variables
 let current = 0;
 let streak = 0;
-let isDark = false;
 let filtered = [...questions];
 let quiz = [];
 let quizLength = 5;
 let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || "[]");
 let reviewLog = [];
-let missedQuestions = {}; // Tracks how many times each question is missed
+let missedQuestions = {}; // Tracks missed questions
 let wrongAnswers = JSON.parse(localStorage.getItem('wrongAnswers') || "[]");
 let mastered = JSON.parse(localStorage.getItem('mastered') || "[]");
-let spacedReview = JSON.parse(localStorage.getItem('spacedReview') || "[]");
 
 // Updates the progress bar
 function updateProgress() {
@@ -28,14 +26,14 @@ function startQuiz() {
   quiz = filtered.sort(() => 0.5 - Math.random()).slice(0, quizLength);
   current = 0;
   loadQuestion();
-  refreshAnalytics(); // Refresh analytics
+  refreshAnalytics();
 }
 
 // Loads the current question
 function loadQuestion() {
   if (current >= quiz.length) {
+    checkCompletion();
     showCelebration();
-    showAnalytics(); // Show analytics after the quiz ends
     return;
   }
 
@@ -47,19 +45,23 @@ function loadQuestion() {
 
   document.getElementById("quizTopic").innerText = `Topic: ${q.topic.toUpperCase()}`;
   document.getElementById("question").innerHTML = `${q.question} <span class="bookmark" data-question="${q.question}">🔖</span>`;
-  const answersDiv = document.getElementById("answers");
-  answersDiv.innerHTML = q.answers
+  document.getElementById("answers").innerHTML = q.answers
     .map((answer, index) => `<div class="answer" data-index="${index}">${answer}</div>`)
     .join('');
-
   document.getElementById("feedback").innerText = '';
   updateProgress();
 }
 
-function toggleBookmark(question) {
-  if (bookmarks.includes(question)) bookmarks = bookmarks.filter(q => q !== question);
-  else bookmarks.push(question);
-  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+// Checks if all questions are answered
+function checkCompletion() {
+  const totalQuestions = questions.length;
+  const totalAnswered = mastered.length + wrongAnswers.length;
+
+  if (totalAnswered === totalQuestions) {
+    const quitButton = document.getElementById("quitButton");
+    quitButton.innerText = "Complete!";
+    quitButton.disabled = false;
+  }
 }
 
 // Handles answer selection
@@ -80,9 +82,48 @@ function checkAnswer(selected) {
     missedQuestions[q.question] = (missedQuestions[q.question] || 0) + 1;
   }
 
-  saveProgress(); // Save progress after updating state
-  showAnalytics(); // Update analytics after each answer
+  saveProgress();
+  updateSettingsProgress();
+  refreshAnalytics();
   setTimeout(() => { current++; loadQuestion(); }, 600);
+}
+
+// Saves progress to localStorage
+function saveProgress() {
+  localStorage.setItem('wrongAnswers', JSON.stringify(wrongAnswers));
+  localStorage.setItem('mastered', JSON.stringify(mastered));
+}
+
+// Updates the progress bar in settings
+function updateSettingsProgress() {
+  const totalQuestions = questions.length;
+  const totalAnswered = mastered.length + wrongAnswers.length;
+  const totalCorrect = mastered.length;
+  const totalMissed = wrongAnswers.length;
+  const totalUnanswered = totalQuestions - totalAnswered;
+
+  document.getElementById("totalQuestions").innerText = totalQuestions;
+  document.getElementById("answeredQuestions").innerText = totalAnswered;
+
+  const progressBar = document.getElementById("overallProgressBar");
+  progressBar.innerHTML = `
+    <div style="width: ${(totalCorrect / totalQuestions) * 100}%; background: #56AB2F;" title="Correct"></div>
+    <div style="width: ${(totalMissed / totalQuestions) * 100}%; background: #FF6F61;" title="Missed"></div>
+    <div style="width: ${(totalUnanswered / totalQuestions) * 100}%; background: #AAAAAA;" title="Unanswered"></div>
+  `;
+}
+
+// Resets all progress and analytics
+function resetAll() {
+  if (confirm("Reset all progress and analytics data?")) {
+    mastered = [];
+    wrongAnswers = [];
+    missedQuestions = {};
+    saveProgress();
+    updateSettingsProgress();
+    refreshAnalytics();
+    location.reload();
+  }
 }
 
 // Shows the celebration screen
@@ -140,6 +181,7 @@ function resetProgress() {
     wrongAnswers = [];
     missedQuestions = {};
     saveProgress(); // Save the reset state
+    updateSettingsProgress(); // Reset progress bar in settings
     showAnalytics(); // Update analytics after resetting progress
     location.reload();
   }
@@ -207,6 +249,46 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     console.error("Celebration element not found!");
   }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const resetAllButton = document.getElementById("resetAllButton");
+  const resetProgressButton = document.getElementById("resetProgressButton");
+  const resetAnalyticsButton = document.getElementById("resetAnalyticsButton");
+
+  if (resetAllButton) {
+    resetAllButton.addEventListener("click", resetAll);
+  } else {
+    console.error("Reset All button not found!");
+  }
+
+  if (resetProgressButton) {
+    resetProgressButton.addEventListener("click", resetProgress);
+  } else {
+    console.error("Reset Progress button not found!");
+  }
+
+  if (resetAnalyticsButton) {
+    resetAnalyticsButton.addEventListener("click", resetAnalytics);
+  } else {
+    console.error("Reset Analytics button not found!");
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const resetAllButton = document.getElementById("resetAllButton");
+
+  if (resetAllButton) {
+    resetAllButton.addEventListener("click", resetAll);
+  } else {
+    console.error("Reset All button not found!");
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Automatically enable Smart Learning
+  localStorage.setItem("smartLearningEnabled", "true");
+  startQuiz = smartStartQuiz; // Use the Smart Learning startQuiz function
 });
 
 function showReview() {
@@ -345,8 +427,13 @@ function refreshAnalytics() {
 
 document.getElementById("toggleAnalyticsButton").addEventListener("click", toggleAnalytics);
 
-// Saves progress to localStorage
-function saveProgress() {
-  localStorage.setItem('wrongAnswers', JSON.stringify(wrongAnswers));
-  localStorage.setItem('mastered', JSON.stringify(mastered));
-}
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("Analytics container:", document.getElementById("analyticsContainer"));
+  console.log("Missed Questions Stats:", document.getElementById("missedQuestionsStats"));
+  console.log("Missed Topics Stats:", document.getElementById("missedTopicsStats"));
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Initialize analytics
+  showAnalytics();
+});

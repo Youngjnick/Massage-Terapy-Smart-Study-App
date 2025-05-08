@@ -188,3 +188,50 @@ body {
 .progress-bar div:nth-child(3) {
   background: #AAAAAA; /* Gray for unanswered */
 }
+
+#overallProgressBar {
+  display: flex;
+  height: 15px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 10px 0;
+  background: rgba(0, 0, 0, 0.1); /* Background for empty space */
+}
+
+#overallProgressBar div {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+#overallProgressBar div:nth-child(1) {
+  background: #56AB2F; /* Green for correct */
+}
+
+#overallProgressBar div:nth-child(2) {
+  background: #FF6F61; /* Red for missed */
+}
+
+#overallProgressBar div:nth-child(3) {
+  background: #AAAAAA; /* Gray for unanswered */
+}
+
+.reset-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.reset-buttons button {
+  padding: 10px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background: #FF6F61;
+  color: white;
+  transition: background 0.3s ease;
+}
+
+.reset-buttons button:hover {
+  background: #FF4C3B;
+}

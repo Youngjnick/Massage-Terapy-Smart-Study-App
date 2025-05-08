@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Massage Smart Study Pro (Polished Ultimate)</title>
+  <title>Massage Therapy Smart Study Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="icon.png" type="image/png">
   <link rel="apple-touch-icon" href="icon.png">
@@ -9,13 +9,13 @@
 </head>
 <body>
 
-<h1>Massage Smart Study Pro - Polished Ultimate</h1>
+<h1>Massage Therapy Smart Study Pro</h1>
 <div id="progress">Loading...</div>
 <div id="streak"></div>
 <div id="quizTopic"></div>
 <div id="progressBar"><div id="progressFill"></div></div>
 
-<label>Focus On:</label>
+<label>Focus:</label>
 <select id="focus" onchange="applyFocus()">
   <option value="all">All</option>
   <option value="missed">Missed</option>
@@ -50,13 +50,22 @@
   <button onclick="resetProgress()">Reset Progress</button>
   <h3>All Questions (tap to show answers)</h3>
   <div id="allQuestions"></div>
+  <h3>Progress Overview</h3>
+  <p>Total Questions: <span id="totalQuestions"></span></p>
+  <p>Answered: <span id="answeredQuestions"></span></p>
+  <div class="progress-bar" id="overallProgressBar"></div>
+
+  <div class="reset-buttons">
+    <button id="resetAllButton">Reset All</button>
+    <button id="resetProgressButton">Reset Progress</button>
+    <button id="resetAnalyticsButton">Reset Analytics</button>
+  </div>
 </div>
 
 <button id="toggleAnalyticsButton">Show Analytics</button>
-<button onclick="resetAnalytics()">Reset Analytics</button>
 
 <div id="questionBox">
-  <div id="question">Loading question...</div>
+  <div id="question"></div>
   <div id="answers"></div>
   <div id="feedback"></div>
 </div>
@@ -77,5 +86,11 @@
 <script src="questions-full-expanded.js"></script>
 <script src="app.js"></script>
 <script src="smartlearning.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    localStorage.setItem("smartLearningEnabled", "true");
+    startQuiz = smartStartQuiz; // Use the Smart Learning startQuiz function
+  });
+</script>
 </body>
 </html>
