@@ -1,0 +1,110 @@
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg, #A8E063, #56AB2F);
+  color: white;
+  padding: 20px;
+  transition: background 0.5s, color 0.5s;
+}
+
+.dark {
+  background: #111;
+  color: white;
+}
+
+#questionBox {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 30px;
+  border-radius: 15px;
+  max-width: 600px;
+  margin: 30px auto;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark #questionBox {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#question {
+  font-size: 26px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.answer {
+  display: block;
+  padding: 12px;
+  margin: 8px 0;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.answer:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+#feedback, #progress, #streak, #quizTopic {
+  margin-top: 20px;
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+}
+
+#celebration {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 32px;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  cursor: pointer;
+}
+
+#review, #settings {
+  display: none;
+  background: #222;
+  padding: 10px;
+  margin-top: 20px;
+  border-radius: 8px;
+}
+
+.bookmark {
+  color: gold;
+  cursor: pointer;
+  float: right;
+}
+
+#progressBar {
+  width: 100%;
+  background-color: #555;
+  height: 8px;
+  margin-top: 10px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#progressFill {
+  height: 100%;
+  background-color: #00aaff;
+  width: 0%;
+  transition: width 0.3s;
+}
+
+.questionItem {
+  padding: 10px;
+  border-bottom: 1px solid #444;
+  cursor: pointer;
+}
+
+.questionAnswer {
+  padding: 5px 0 10px 20px;
+  display: none;
+  color: #aaa;
+}
