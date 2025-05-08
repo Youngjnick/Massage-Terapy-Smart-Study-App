@@ -1,1 +1,1 @@
-# Massage-Terapy-Smart-Study-App
+# Massage-Therapy-Smart-Study-App
