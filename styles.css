@@ -108,3 +108,83 @@ body {
   display: none;
   color: #aaa;
 }
+
+#stats {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+#stats h2 {
+  margin-bottom: 10px;
+}
+
+#stats h3 {
+  margin-top: 15px;
+  color: #333;
+}
+
+#stats p {
+  margin: 5px 0;
+  color: #555;
+}
+
+#analytics {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3); /* Match the green theme with a dark transparent background */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
+  border-radius: 8px;
+  color: white; /* Ensure text is readable */
+  position: relative; /* Keep it in the flow of the page */
+}
+
+#analytics h2, #analytics h3, #analytics p {
+  color: white; /* Ensure text is readable on dark backgrounds */
+}
+
+#analytics .progress-bar {
+  background: rgba(0, 0, 0, 0.5); /* Darker transparent background */
+  border-radius: 5px;
+  overflow: hidden;
+  height: 10px;
+  margin: 5px 0;
+}
+
+#analytics .progress-bar div {
+  height: 100%;
+  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #A8E063, #56AB2F); /* Green gradient */
+}
+
+#analytics .progress-bar div:hover {
+  filter: brightness(1.2); /* Brighten the bar on hover */
+}
+
+.progress-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 5px 0;
+  background: rgba(0, 0, 0, 0.1); /* Background for empty space */
+}
+
+.progress-bar div {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.progress-bar div:nth-child(1) {
+  background: #56AB2F; /* Green for correct */
+}
+
+.progress-bar div:nth-child(2) {
+  background: #FF6F61; /* Red for missed */
+}
+
+.progress-bar div:nth-child(3) {
+  background: #AAAAAA; /* Gray for unanswered */
+}
