@@ -39,6 +39,10 @@
   <option value="999">All</option>
 </select>
 
+<label>
+  <input type="checkbox" id="smartLearningToggle" onchange="toggleSmartLearning()"> Enable Smart Learning
+</label>
+
 <button onclick="toggleSettings()">Settings</button>
 
 <div id="settings">
@@ -48,10 +52,23 @@
   <div id="allQuestions"></div>
 </div>
 
+<button id="toggleAnalyticsButton">Show Analytics</button>
+<button onclick="resetAnalytics()">Reset Analytics</button>
+
 <div id="questionBox">
   <div id="question">Loading question...</div>
   <div id="answers"></div>
   <div id="feedback"></div>
+</div>
+
+<!-- Move the analytics section here -->
+<div id="analyticsContainer">
+  <div id="analytics">
+    <h2>General Analytics</h2>
+    <div id="missedQuestionsStats"></div>
+    <div id="missedTopicsStats"></div>
+    <div id="smartAnalytics"></div> <!-- Smart Analytics Section -->
+  </div>
 </div>
 
 <div id="celebration" style="display: none;">🎉 Congratulations! You finished the quiz! 🎉 (Click to close)</div>
@@ -59,5 +76,6 @@
 
 <script src="questions-full-expanded.js"></script>
 <script src="app.js"></script>
+<script src="smartlearning.js"></script>
 </body>
 </html>
