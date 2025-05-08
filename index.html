@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Massage Smart Study Pro (Advanced Edition)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <style>
+    body { font-family: Arial; background: linear-gradient(135deg, #A8E063, #56AB2F); color: white; padding: 20px; transition: background 0.5s, color 0.5s; }
+    .dark { background: #111; color: white; }
+    #questionBox { background: rgba(0,0,0,0.3); padding: 30px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .dark #questionBox { background: rgba(255,255,255,0.1); }
+    #question { font-size: 26px; font-weight: bold; margin-bottom: 20px; }
+    .answer { display: block; padding: 12px; margin: 8px 0; background: rgba(255,255,255,0.3); cursor: pointer; border-radius: 8px; text-align: center; }
+    .answer:hover { background: rgba(255,255,255,0.5); }
+    #feedback, #progress, #streak { margin-top: 20px; font-weight: bold; font-size: 18px; text-align: center; }
+    #celebration { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); color:white; font-size:32px; justify-content:center; align-items:center; z-index:999; }
+    #review { display:none; background:#222; padding:10px; margin-top:20px; border-radius:8px; }
+    .bookmark { color: gold; cursor: pointer; float: right; }
+  </style>
+</head>
+<body>
+
+<h1>Massage Smart Study Pro - Advanced Edition</h1>
+<div id="progress">Loading...</div>
+<div id="streak"></div>
+
+<label>Focus On:</label>
+<select id="focus" onchange="applyFocus()">
+  <option value="all">All</option>
+  <option value="missed">Missed</option>
+  <option value="unanswered">Unanswered</option>
+  <option value="bookmarked">Bookmarked</option>
+</select>
+
+<label>Quiz Length:</label>
+<select id="quizLength" onchange="setQuizLength()">
+  <option value="5">5 Questions</option>
+  <option value="10">10 Questions</option>
+  <option value="20">20 Questions</option>
+  <option value="999">All</option>
+</select>
+
+<button onclick="resetProgress()">Reset Progress</button>
+
+<div id="questionBox">
+  <div id="question">Loading question...</div>
+  <div id="answers"></div>
+  <div id="feedback"></div>
+</div>
+
+<div id="celebration">🎉 Congratulations! You finished the quiz! 🎉</div>
+<div id="review"><h2>Review</h2><div id="reviewContent"></div></div>
+
+<script src="questions-full-expanded.js"></script>
+<script>
+let current = 0;
+let streak = 0;
+let isDark = false;
+let filtered = [...questions];
+let quiz = [];
+let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || "[]");
+let quizLength = 5;
+let reviewLog = [];
+
+let wrongAnswers = JSON.parse(localStorage.getItem('wrongAnswers') || "[]");
+let mastered = JSON.parse(localStorage.getItem('mastered') || "[]");
+let spacedReview = JSON.parse(localStorage.getItem('spacedReview') || "[]");
+
+function updateProgress() {
+  document.getElementById("progress").innerText = `Mastered: ${mastered.length} / ${questions.length} | Streak: ${streak}`;
+}
+
+function startQuiz() {
+  quiz = filtered.sort(() => 0.5 - Math.random()).slice(0, quizLength);
+  current = 0;
+  loadQuestion();
+}
+
+function loadQuestion() {
+  updateProgress();
+  if (current >= quiz.length) {
+    document.getElementById("celebration").style.display = "flex";
+    document.getElementById("review").style.display = "block";
+    document.getElementById("reviewContent").innerHTML = reviewLog.join('<br>');
+    return;
+  }
+
+  const q = quiz[current];
+  document.getElementById("question").innerHTML = q.question + `<span class="bookmark" onclick="toggleBookmark('${q.question}')">🔖</span>`;
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = '';
+
+  q.answers.forEach((answer, index) => {
+    const btn = document.createElement("div");
+    btn.innerText = answer;
+    btn.className = 'answer';
+    btn.onclick = () => checkAnswer(index);
+    answersDiv.appendChild(btn);
+  });
+
+  document.getElementById("feedback").innerText = '';
+}
+
+function toggleBookmark(question) {
+  if (bookmarks.includes(question)) bookmarks = bookmarks.filter(q => q !== question);
+  else bookmarks.push(question);
+  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+}
+
+function checkAnswer(selected) {
+  const q = quiz[current];
+  const correct = q.correct;
+
+  if (selected === correct) {
+    document.getElementById("feedback").innerText = "✅ Correct!";
+    streak++;
+    reviewLog.push(`✅ ${q.question} → ${q.answers[correct]}`);
+    if (!mastered.find(mq => mq.question === q.question)) mastered.push(q);
+  } else {
+    document.getElementById("feedback").innerText = `❌ Incorrect. Correct: ${q.answers[correct]}`;
+    streak = 0;
+    wrongAnswers.push(q);
+    reviewLog.push(`❌ ${q.question} → Correct: ${q.answers[correct]}`);
+  }
+
+  localStorage.setItem('wrongAnswers', JSON.stringify(wrongAnswers));
+  localStorage.setItem('mastered', JSON.stringify(mastered));
+
+  setTimeout(() => { current++; loadQuestion(); }, 600);
+}
+
+function applyFocus() {
+  const focus = document.getElementById("focus").value;
+  if (focus === "missed") filtered = wrongAnswers;
+  else if (focus === "unanswered") filtered = questions.filter(q => !mastered.find(mq => mq.question === q.question));
+  else if (focus === "bookmarked") filtered = questions.filter(q => bookmarks.includes(q.question));
+  else filtered = [...questions];
+
+  startQuiz();
+}
+
+function setQuizLength() {
+  quizLength = parseInt(document.getElementById("quizLength").value);
+  startQuiz();
+}
+
+function resetProgress() {
+  if (confirm("Reset all progress?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+document.body.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('answer') && !e.target.closest('button') && !e.target.classList.contains('bookmark')) {
+    current++; loadQuestion();
+  }
+});
+
+document.body.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 't') toggleTheme();
+});
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+}
+
+window.onload = () => { startQuiz(); };
+</script>
+
+</body>
+</html>
