@@ -51,6 +51,20 @@ body {
   text-align: center;
 }
 
+#streak {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+#encouragementTip {
+  text-align: center;
+  margin-top: 5px;
+  font-style: italic;
+  color: #555;
+}
+
 #celebration {
   display: none;
   position: fixed;
@@ -79,6 +93,11 @@ body {
   color: gold;
   cursor: pointer;
   float: right;
+  font-size: 18px;
+}
+
+.bookmark:hover {
+  color: orange;
 }
 
 #progressBar {
@@ -234,4 +253,79 @@ body {
 
 .reset-buttons button:hover {
   background: #FF4C3B;
+}
+
+.analytics-card {
+  background: rgba(255, 255, 255, 0.08); /* Subtle transparent background */
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Soft shadow for depth */
+}
+
+.analytics-card h2, .analytics-card h3, .analytics-card p {
+  color: white; /* Ensure text is readable on dark backgrounds */
+}
+
+.analytics-card h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.analytics-card h3 {
+  font-size: 16px;
+  margin-top: 15px;
+}
+
+.analytics-card p {
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.analytics-card .progress-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 10px 0;
+  background: rgba(0, 0, 0, 0.3); /* Darker transparent background */
+}
+
+.analytics-card .progress-bar div {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.analytics-card .progress-bar div:nth-child(1) {
+  background: #4CAF50; /* Green for mastered */
+}
+
+.analytics-card .progress-bar div:nth-child(2) {
+  background: #FFC107; /* Yellow for in review */
+}
+
+.analytics-card .progress-bar div:nth-child(3) {
+  background: #AAAAAA; /* Gray for remaining */
+}
+
+.question-item {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #f9f9f9;
+}
+
+.question-item p {
+  margin: 5px 0;
+}
+
+.question-item ul {
+  margin: 5px 0;
+  padding-left: 20px;
+}
+
+.question-item ul li {
+  list-style-type: disc;
 }

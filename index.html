@@ -12,6 +12,7 @@
 <h1>Massage Therapy Smart Study Pro</h1>
 <div id="progress">Loading...</div>
 <div id="streak"></div>
+<div id="encouragementTip" style="text-align:center; margin-top:5px; font-style:italic;"></div>
 <div id="quizTopic"></div>
 <div id="progressBar"><div id="progressFill"></div></div>
 
@@ -29,6 +30,7 @@
   <option value="effects">Effects</option>
   <option value="contraindications">Contraindications</option>
   <option value="professional">Professional</option>
+  <option value="regulation">Regulation</option>
 </select>
 
 <label>Quiz Length:</label>
@@ -49,7 +51,27 @@
   <h2>Settings</h2>
   <button onclick="resetProgress()">Reset Progress</button>
   <h3>All Questions (tap to show answers)</h3>
-  <div id="allQuestions"></div>
+  <div id="allQuestions">
+    <div class="question-item">
+      <p><strong>Q1:</strong> What does tractioning mean?</p>
+      <ul>
+        <li>Pulling</li>
+        <li>Twisting</li>
+      </ul>
+      <p><em>Correct Answer:</em> Pulling</p>
+      <p><em>Topic:</em> terminology</p>
+    </div>
+    <div class="question-item">
+      <p><strong>Q2:</strong> What does massage mean?</p>
+      <ul>
+        <li>Manual or mechanical manipulation of the body</li>
+        <li>Application of oils only</li>
+      </ul>
+      <p><em>Correct Answer:</em> Manual or mechanical manipulation of the body</p>
+      <p><em>Topic:</em> terminology</p>
+    </div>
+    <!-- More questions... -->
+  </div>
   <h3>Progress Overview</h3>
   <p>Total Questions: <span id="totalQuestions"></span></p>
   <p>Answered: <span id="answeredQuestions"></span></p>
@@ -65,7 +87,9 @@
 <button id="toggleAnalyticsButton">Show Analytics</button>
 
 <div id="questionBox">
-  <div id="question"></div>
+  <div id="question">
+    What is the capital of France? <span class="bookmark" data-question="What is the capital of France?" onclick="toggleBookmark('What is the capital of France?')">➕</span>
+  </div>
   <div id="answers"></div>
   <div id="feedback"></div>
 </div>
@@ -77,6 +101,14 @@
     <div id="missedQuestionsStats"></div>
     <div id="missedTopicsStats"></div>
     <div id="smartAnalytics"></div> <!-- Smart Analytics Section -->
+    <div id="smartAnalytics"></div>
+    <div class="analytics-card">
+      <h2>🚀 Smart Learning Progress</h2>
+      <div class="progress-bar">
+        <div style="width: 75%; background: #56AB2F;" title="Overall Mastery"></div>
+      </div>
+      <p>75% towards mastering all questions</p>
+    </div>
   </div>
 </div>
 
@@ -85,12 +117,20 @@
 
 <script src="questions-full-expanded.js"></script>
 <script src="app.js"></script>
-<script src="smartlearning.js"></script>
+<script src="smartLearningAnalytics.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("smartLearningEnabled", "true");
     startQuiz = smartStartQuiz; // Use the Smart Learning startQuiz function
   });
+
+  const originalCheckAnswer_analytics = checkAnswer;
+  checkAnswer = function (selected) {
+    const q = quiz[current];
+    const isCorrect = selected === q.correct;
+    updateDailyStats(isCorrect, q); // Call updateDailyStats here
+    originalCheckAnswer_analytics(selected);
+  };
 </script>
 </body>
 </html>

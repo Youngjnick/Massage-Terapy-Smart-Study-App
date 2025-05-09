@@ -437,3 +437,51 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize analytics
   showAnalytics();
 });
+
+function toggleBookmark(questionText) {
+  let bookmarks = JSON.parse(localStorage.getItem("bookmarks") || "[]");
+
+  if (bookmarks.includes(questionText)) {
+    // Remove the bookmark
+    bookmarks = bookmarks.filter(bookmark => bookmark !== questionText);
+    console.log(`Removed bookmark for: ${questionText}`);
+  } else {
+    // Add the bookmark
+    bookmarks.push(questionText);
+    console.log(`Added bookmark for: ${questionText}`);
+  }
+
+  localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+  updateBookmarkUI(questionText, bookmarks.includes(questionText));
+}
+
+// Update the UI to reflect the bookmark state
+function updateBookmarkUI(questionText, isBookmarked) {
+  const bookmarkElement = document.querySelector(`[data-question="${questionText}"]`);
+  if (bookmarkElement) {
+    bookmarkElement.innerText = isBookmarked ? "🔖" : "➕";
+  }
+}
+
+function renderAllQuestions() {
+  const allQuestionsDiv = document.getElementById("allQuestions");
+  allQuestionsDiv.innerHTML = ""; // Clear any existing content
+
+  questions.forEach((q, index) => {
+    const questionHTML = `
+      <div class="question-item">
+        <p><strong>Q${index + 1}:</strong> ${q.question}</p>
+        <ul>
+          ${q.answers.map((answer, i) => `<li>${answer}</li>`).join("")}
+        </ul>
+        <p><em>Correct Answer:</em> ${q.answers[q.correct]}</p>
+        <p><em>Topic:</em> ${q.topic}</p>
+      </div>
+    `;
+    allQuestionsDiv.innerHTML += questionHTML;
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderAllQuestions();
+});

@@ -1,4 +1,21 @@
 const questions = [
+    // Add more questions from questions-expanded-set-2.js here
+  { topic: "terminology", question: "What does tractioning mean?", answers: ["Pulling", "Twisting"], correct: 0 },
+  { topic: "terminology", question: "What does massage mean?", answers: ["Manual or mechanical manipulation of the body", "Application of oils only"], correct: 0 },
+  { topic: "ethics", question: "What is ethics in massage therapy?", answers: ["A code of morals guiding professional conduct", "Massage techniques list"], correct: 0 },
+  { topic: "ethics", question: "What is proportionality in ethics?", answers: ["Benefits must outweigh costs", "Costs must outweigh benefits"], correct: 0 },
+  { topic: "ethics", question: "What defines professional ethics?", answers: ["Concern for public and individual welfare", "Focus only on personal gains"], correct: 0 },
+  { topic: "ethics", question: "What are professional boundaries?", answers: ["Predetermined practices outlined in procedural forms", "Flexible based on mood"], correct: 0 },
+  { topic: "ethics", question: "Why consider the location of massage services?", answers: ["It affects boundary safety and consistency", "It determines therapist reputation"], correct: 0 },
+  { topic: "ethics", question: "What is scope of practice?", answers: ["Legal rights and activities allowed for licensed therapists", "General techniques used globally"], correct: 0 },
+  { topic: "ethics", question: "What can cause license removal?", answers: ["Fraud, felony, unethical behavior", "Low client tips"], correct: 0 },
+  { topic: "regulation", question: "What is NIH?", answers: ["National Institutes of Health", "National Institute of Holistics"], correct: 0 },
+  { topic: "regulation", question: "What does FSMTB do?", answers: ["Administers the MBLEx exam", "Provides massage oils"], correct: 0 },
+   { topic: "benefits", question: "What are common massage benefits?", answers: ["Stress relief, blood flow manipulation, grounding", "Increased appetite"], correct: 0 },
+  { topic: "contraindications", question: "When is massage contraindicated?", answers: ["During infections, severe edema, or inflammation", "During hunger or boredom"], correct: 0 },
+  { topic: "techniques", question: "What is effleurage?", answers: ["Gliding stroke", "Percussion stroke"], correct: 0 },
+  { topic: "techniques", question: "What is tapotement?", answers: ["Light percussion", "Kneading"], correct: 0 },
+
   // Ethics
   { topic: "ethics", question: "What does HIPAA stand for?", answers: ["Health Insurance Portability and Accountability Act", "Hippocratic Information Patient Privacy Act"], correct: 0 },
   { topic: "ethics", question: "What is veracity in massage therapy ethics?", answers: ["Client's right to objective truth", "Doing no harm"], correct: 0 },
