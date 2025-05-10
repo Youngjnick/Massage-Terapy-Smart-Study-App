@@ -1,104 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Massage Therapy Smart Study Pro</title>
-  <link rel="icon" href="app-icon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="app-header">
-    <div class="brand">
-      <img src="app-icon.png" class="logo" alt="App Icon">
-      <div class="title-group">
-        <h1>Massage Therapy</h1>
-        <div class="subtitle">Smart Study Pro</div>
-      </div>
-      <button class="profile-btn">Profile ▾</button>
-    </div>
-    <div class="dropdown-controls">
-      <select id="focus" class="dropdown" onchange="applyFocus()">
-        <option value="All">All</option>
-        <option value="Missed">Missed</option>
-        <option value="Unanswered">Unanswered</option>
-        <option value="Bookmarked">Bookmarked</option>
-        <option value="Ethics">Ethics</option>
-        <option value="People">People</option>
-        <option value="Anatomy">Anatomy</option>
-        <option value="SOAP">SOAP</option>
-        <option value="History">History</option>
-        <option value="Effects">Effects</option>
-        <option value="Contraindications">Contraindications</option>
-        <option value="Professional">Professional</option>
-        <option value="Regulation">Regulation</option>
-        <option value="Terminology">Terminology</option>
-        <option value="Benefits">Benefits</option>
-      </select>
-      <select><option>Difficulty</option></select>
-      <select id="quizLength" class="dropdown" onchange="setQuizLength()">
-        <option value="5">5 Questions</option>
-        <option value="10">10 Questions</option>
-        <option value="20">20 Questions</option>
-        <option value="999">All</option>
-      </select>
-      <select id="topicDropdown"></select>
-      <select id="subcategoryDropdown"></select>
-      <select id="difficultyDropdown"></select>
-      <select id="tagDropdown"></select>
-    </div>
-  </header>
 
-  <div class="toggle-bar">
-    <span class="toolbar-item" id="smartLearningButton">Smart Learning</span>
-    <span class="toolbar-item" id="viewAnalyticsButton">View Analytics</span>
-    <span class="toolbar-item" id="settingsButton">Settings</span>
+<h1>Massage Therapy Smart Study Pro</h1>
+<div id="progress">Loading...</div>
+<div id="streak"></div>
+<div id="encouragementTip" style="text-align:center; margin-top:5px; font-style:italic;"></div>
+<div id="quizTopic"></div>
+<div id="progressBar"><div id="progressFill"></div></div>
+
+<label>Focus:</label>
+<select id="focus" onchange="applyFocus()">
+  <option value="all">All</option>
+  <option value="missed">Missed</option>
+  <option value="unanswered">Unanswered</option>
+  <option value="bookmarked">Bookmarked</option>
+  <option value="ethics">Ethics</option>
+  <option value="people">People</option>
+  <option value="anatomy">Anatomy</option>
+  <option value="soap">SOAP</option>
+  <option value="history">History</option>
+  <option value="effects">Effects</option>
+  <option value="contraindications">Contraindications</option>
+  <option value="professional">Professional</option>
+  <option value="regulation">Regulation</option>
+</select>
+
+<label>Quiz Length:</label>
+<select id="quizLength" onchange="setQuizLength()">
+  <option value="5">5 Questions</option>
+  <option value="10">10 Questions</option>
+  <option value="20">20 Questions</option>
+  <option value="999">All</option>
+</select>
+
+<label>
+  <input type="checkbox" id="smartLearningToggle" onchange="toggleSmartLearning()"> Enable Smart Learning
+</label>
+
+<button onclick="toggleSettings()">Settings</button>
+
+<div id="settings">
+  <h2>Settings</h2>
+  <button onclick="resetProgress()">Reset Progress</button>
+  <h3>All Questions (tap to show answers)</h3>
+  <div id="allQuestions">
+    <div class="question-item">
+      <p><strong>Q1:</strong> What does tractioning mean?</p>
+      <ul>
+        <li>Pulling</li>
+        <li>Twisting</li>
+      </ul>
+      <p><em>Correct Answer:</em> Pulling</p>
+      <p><em>Topic:</em> terminology</p>
+    </div>
+    <div class="question-item">
+      <p><strong>Q2:</strong> What does massage mean?</p>
+      <ul>
+        <li>Manual or mechanical manipulation of the body</li>
+        <li>Application of oils only</li>
+      </ul>
+      <p><em>Correct Answer:</em> Manual or mechanical manipulation of the body</p>
+      <p><em>Topic:</em> terminology</p>
+    </div>
+    <!-- More questions... -->
   </div>
+  <h3>Progress Overview</h3>
+  <p>Total Questions: <span id="totalQuestions"></span></p>
+  <p>Answered: <span id="answeredQuestions"></span></p>
+  <div class="progress-bar" id="overallProgressBar"></div>
 
-  <div class="quiz-card">
-    <div class="quiz-meta">
-      <span class="meta-item"><strong>Streak:</strong> 3</span>
-    </div>
-    <div class="question" id="question">What is informed consent?</div>
-    <div class="answers" id="answers">
-      <div class="answer">A. Permission after full disclosure</div>
-      <div class="answer">B. Assumed permission once session begins</div>
-    </div>
-    <div class="feedback correct" id="feedback">✅ Correct! Informed consent requires disclosure.</div>
-    <div class="progress-container">
-      <div class="progress-bar">
-        <span>Progress</span>
-        <div class="bar-wrapper">
-          <div class="bar-fill"></div>
-        </div>
-        <span>60%</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="quizTopic"></div>
-  <div id="analyticsContainer">
-    <div id="analytics" style="display: none;">
-      <div id="missedQuestionsStats"></div>
-      <div id="missedTopicsStats"></div>
-    </div>
-  </div>
-
-  <div id="allQuestions" style="display: none;"></div>
-
-  <div id="settings" style="display: none;">
-    <h3>Settings</h3>
+  <div class="reset-buttons">
     <button id="resetAllButton">Reset All</button>
     <button id="resetProgressButton">Reset Progress</button>
     <button id="resetAnalyticsButton">Reset Analytics</button>
   </div>
+</div>
 
-  <!-- Scripts -->
-  <script src="questions-full-expanded.js"></script>
-  <script src="smartLearningAnalytics.js"></script>
-  <script src="app.js"></script>
-  <script>
-    console.log("Questions array:", questions);
-  </script>
+<button id="toggleAnalyticsButton">Show Analytics</button>
+
+<div id="questionBox">
+  <div id="question">
+    What is the capital of France? <span class="bookmark" data-question="What is the capital of France?" onclick="toggleBookmark('What is the capital of France?')">➕</span>
+  </div>
+  <div id="answers"></div>
+  <div id="feedback"></div>
+</div>
+
+<!-- Move the analytics section here -->
+<div id="analyticsContainer">
+  <div id="analytics">
+    <h2>General Analytics</h2>
+    <p>You answered <span id="correctAnswers"></span> questions correctly out of <span id="totalQuestions"></span>.</p>
+    <p>Your strongest topic: <span id="strongestTopic"></span></p>
+    <p>Your weakest topic: <span id="weakestTopic"></span></p>
+    <div id="missedQuestionsStats"></div>
+    <div id="missedTopicsStats"></div>
+    <div id="smartAnalytics"></div> <!-- Smart Analytics Section -->
+    <div id="smartAnalytics"></div>
+    <div class="analytics-card">
+      <h2>🚀 Smart Learning Progress</h2>
+      <div class="progress-bar">
+        <div style="width: 75%; background: #56AB2F;" title="Overall Mastery"></div>
+      </div>
+      <p>75% towards mastering all questions</p>
+    </div>
+  </div>
+</div>
+
+<div id="celebration" style="display: none;">🎉 Congratulations! You finished the quiz! 🎉 (Click to close)</div>
+<div id="review"><h2>Review</h2><div id="reviewContent"></div></div>
+
+<script src="questions-full-expanded.js"></script>
+<script src="app.js"></script>
+<script src="smartLearningAnalytics.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    localStorage.setItem("smartLearningEnabled", "true");
+    startQuiz = smartStartQuiz; // Use the Smart Learning startQuiz function
+  });
+
+  const originalCheckAnswer_analytics = checkAnswer;
+  checkAnswer = function (selected) {
+    const q = quiz[current];
+    const isCorrect = selected === q.correct;
+    updateDailyStats(isCorrect, q); // Call updateDailyStats here
+    originalCheckAnswer_analytics(selected);
+  };
+</script>
 </body>
 </html>
