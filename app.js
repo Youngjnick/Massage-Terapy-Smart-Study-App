@@ -1,4 +1,4 @@
-// Core variables
+// Core Variables
 let current = 0;
 let streak = 0;
 let filtered = [...questions];
@@ -6,34 +6,41 @@ let quiz = [];
 let quizLength = 5;
 let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || "[]");
 let reviewLog = [];
-let missedQuestions = {}; // Tracks missed questions
+let missedQuestions = {};
 let wrongAnswers = JSON.parse(localStorage.getItem('wrongAnswers') || "[]");
 let mastered = JSON.parse(localStorage.getItem('mastered') || "[]");
+let spacedReview = JSON.parse(localStorage.getItem('spacedReview') || '[]');
+let dailyStats = JSON.parse(localStorage.getItem('dailyStats') || JSON.stringify({ date: null, mastered: 0, missed: 0 }));
 
 // Updates the progress bar
-function updateProgress() {
-  const progress = (current / quiz.length) * 100;
-  document.getElementById("progressFill").style.width = `${progress}%`;
+function updateProgressBar() {
+  const answered = mastered.length + wrongAnswers.length;
+  const total = questions.length;
+  const progress = (answered / total) * 100;
+
+  const progressBar = document.getElementById('progressFill');
+  if (progressBar) {
+    progressBar.style.width = `${progress}%`;
+  }
 }
 
 // Starts the quiz
-function startQuiz() {
-  if (filtered.length === 0) {
-    alert("No questions available. Please check your filters or reset progress.");
-    return;
-  }
-
-  quiz = filtered.sort(() => 0.5 - Math.random()).slice(0, quizLength);
+function startQuiz(filteredQuestions = filtered) {
+  quiz = filteredQuestions.sort(() => Math.random() - 0.5).slice(0, quizLength);
   current = 0;
   loadQuestion();
-  refreshAnalytics();
 }
 
 // Loads the current question
 function loadQuestion() {
+  if (!quiz || quiz.length === 0) {
+    console.error("Quiz array is empty. Ensure the quiz is properly initialized.");
+    return;
+  }
+
   if (current >= quiz.length) {
-    checkCompletion();
-    showCelebration();
+    console.error("Current index is out of bounds. Ending the quiz.");
+    showCompletionMessage(); // Add a function to handle quiz completion
     return;
   }
 
@@ -43,16 +50,144 @@ function loadQuestion() {
     return;
   }
 
-  document.getElementById("quizTopic").innerText = `Topic: ${q.topic.toUpperCase()}`;
   document.getElementById("question").innerHTML = `${q.question} <span class="bookmark" data-question="${q.question}">🔖</span>`;
   document.getElementById("answers").innerHTML = q.answers
     .map((answer, index) => `<div class="answer" data-index="${index}">${answer}</div>`)
     .join('');
   document.getElementById("feedback").innerText = '';
-  updateProgress();
+  updateProgressBar();
 }
 
-// Checks if all questions are answered
+// Handles answer selection
+function checkAnswer(selected) {
+  const q = quiz[current];
+  if (!q) {
+    console.error("Question is undefined. Check the quiz array.");
+    return;
+  }
+
+  const correct = q.correct;
+  if (selected === correct) {
+    document.getElementById("feedback").innerText = "✅ Correct!";
+    streak++;
+    mastered.push(q);
+  } else {
+    document.getElementById("feedback").innerText = `❌ Incorrect. Correct: ${q.answers[correct]}`;
+    streak = 0;
+    wrongAnswers.push(q);
+  }
+
+  saveProgress();
+  setTimeout(() => {
+    current++;
+    loadQuestion();
+  }, 600);
+}
+
+// Saves progress to localStorage
+function saveProgress() {
+  localStorage.setItem('wrongAnswers', JSON.stringify(wrongAnswers));
+  localStorage.setItem('mastered', JSON.stringify(mastered));
+  localStorage.setItem('spacedReview', JSON.stringify(spacedReview));
+}
+
+// Updates daily stats
+function updateDailyStats(correct) {
+  const today = new Date().toISOString().split('T')[0];
+  if (dailyStats.date !== today) {
+    dailyStats = { date: today, mastered: 0, missed: 0 };
+  }
+  if (correct) {
+    dailyStats.mastered++;
+  } else {
+    dailyStats.missed++;
+  }
+  localStorage.setItem('dailyStats', JSON.stringify(dailyStats));
+}
+
+// Schedules a review for a question
+function scheduleReview(questionObj, priority = 'high') {
+  const today = new Date();
+  let nextReviewDate = new Date();
+
+  nextReviewDate.setDate(today.getDate() + (priority === 'high' ? 1 : 3));
+
+  spacedReview.push({
+    question: questionObj,
+    nextReview: nextReviewDate.toISOString().split('T')[0],
+    correctStreak: 0,
+  });
+
+  localStorage.setItem('spacedReview', JSON.stringify(spacedReview));
+}
+
+// Updates review queue after a correct answer
+function updateReviewAfterCorrect(questionText) {
+  spacedReview = spacedReview
+    .map(item => {
+      if (item.question.question === questionText) {
+        item.correctStreak++;
+        if (item.correctStreak >= 3) return null; // Remove if mastered
+      }
+      return item;
+    })
+    .filter(Boolean);
+
+  localStorage.setItem('spacedReview', JSON.stringify(spacedReview));
+}
+
+// Refreshes analytics
+function refreshAnalytics() {
+  showAnalytics();
+  showSmartAnalytics();
+}
+
+// Displays analytics
+function showAnalytics() {
+  const stats = calculateStats();
+
+  document.getElementById("missedQuestionsStats").innerHTML = `
+    <h3>Overall Performance</h3>
+    <p><strong>Total Questions:</strong> ${stats.totalQuestions}</p>
+    <p><strong>Answered:</strong> ${stats.totalAnswered} (${stats.percentAnswered}%)</p>
+    <p><strong>Correct:</strong> ${stats.totalCorrect} (${stats.percentCorrect}%)</p>
+    <p><strong>Missed:</strong> ${stats.totalMissed} (${stats.percentMissed}%)</p>
+    <p><strong>Unanswered:</strong> ${stats.totalUnanswered} (${stats.percentUnanswered}%)</p>
+  `;
+}
+
+// Calculates stats
+function calculateStats() {
+  const totalQuestions = questions.length;
+  const totalAnswered = mastered.length + wrongAnswers.length;
+  const totalCorrect = mastered.length;
+  const totalMissed = wrongAnswers.length;
+  const totalUnanswered = totalQuestions - totalAnswered;
+
+  return {
+    totalQuestions,
+    totalAnswered,
+    totalCorrect,
+    totalMissed,
+    totalUnanswered,
+    percentAnswered: Math.round((totalAnswered / totalQuestions) * 100),
+    percentCorrect: Math.round((totalCorrect / totalQuestions) * 100),
+    percentMissed: Math.round((totalMissed / totalQuestions) * 100),
+    percentUnanswered: Math.round((totalUnanswered / totalQuestions) * 100),
+  };
+}
+
+// Event Listeners
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM fully loaded and parsed");
+
+  // Initialize analytics
+  refreshAnalytics();
+
+  // Render all questions
+  renderAllQuestions();
+});
+
 function checkCompletion() {
   const totalQuestions = questions.length;
   const totalAnswered = mastered.length + wrongAnswers.length;
@@ -62,55 +197,6 @@ function checkCompletion() {
     quitButton.innerText = "Complete!";
     quitButton.disabled = false;
   }
-}
-
-// Handles answer selection
-function checkAnswer(selected) {
-  const q = quiz[current];
-  const correct = q.correct;
-
-  if (selected === correct) {
-    document.getElementById("feedback").innerText = "✅ Correct!";
-    streak++;
-    reviewLog.push(`✅ ${q.question} → ${q.answers[correct]}`);
-    if (!mastered.find(mq => mq.question === q.question)) mastered.push(q);
-  } else {
-    document.getElementById("feedback").innerText = `❌ Incorrect. Correct: ${q.answers[correct]}`;
-    streak = 0;
-    wrongAnswers.push(q);
-    reviewLog.push(`❌ ${q.question} → ${q.answers[correct]}`);
-    missedQuestions[q.question] = (missedQuestions[q.question] || 0) + 1;
-  }
-
-  saveProgress();
-  updateSettingsProgress();
-  refreshAnalytics();
-  setTimeout(() => { current++; loadQuestion(); }, 600);
-}
-
-// Saves progress to localStorage
-function saveProgress() {
-  localStorage.setItem('wrongAnswers', JSON.stringify(wrongAnswers));
-  localStorage.setItem('mastered', JSON.stringify(mastered));
-}
-
-// Updates the progress bar in settings
-function updateSettingsProgress() {
-  const totalQuestions = questions.length;
-  const totalAnswered = mastered.length + wrongAnswers.length;
-  const totalCorrect = mastered.length;
-  const totalMissed = wrongAnswers.length;
-  const totalUnanswered = totalQuestions - totalAnswered;
-
-  document.getElementById("totalQuestions").innerText = totalQuestions;
-  document.getElementById("answeredQuestions").innerText = totalAnswered;
-
-  const progressBar = document.getElementById("overallProgressBar");
-  progressBar.innerHTML = `
-    <div style="width: ${(totalCorrect / totalQuestions) * 100}%; background: #56AB2F;" title="Correct"></div>
-    <div style="width: ${(totalMissed / totalQuestions) * 100}%; background: #FF6F61;" title="Missed"></div>
-    <div style="width: ${(totalUnanswered / totalQuestions) * 100}%; background: #AAAAAA;" title="Unanswered"></div>
-  `;
 }
 
 // Resets all progress and analytics
@@ -129,14 +215,10 @@ function resetAll() {
 // Shows the celebration screen
 function showCelebration() {
   const celebrationDiv = document.getElementById("celebration");
-  celebrationDiv.style.display = "flex";
+  celebrationDiv.classList.add("show");
   celebrationDiv.addEventListener("click", () => {
-    celebrationDiv.style.opacity = "0";
-    setTimeout(() => {
-      celebrationDiv.style.display = "none";
-    }, 500);
+    celebrationDiv.classList.remove("show");
   });
-  refreshAnalytics(); // Refresh analytics
 }
 
 function closeCelebration() {
@@ -144,35 +226,27 @@ function closeCelebration() {
 }
 
 function applyFocus() {
-  const focus = document.getElementById("focus").value;
+  const topic = document.getElementById("topicDropdown").value;
+  const subcategory = document.getElementById("subcategoryDropdown").value;
+  const difficulty = document.getElementById("difficultyDropdown").value;
+  const tag = document.getElementById("tagDropdown").value;
 
-  if (focus === "all") {
-    filtered = [...questions];
-  } else if (focus === "missed") {
-    filtered = wrongAnswers;
-  } else if (focus === "unanswered") {
-    filtered = questions.filter(q => !mastered.find(mq => mq.question === q.question));
-  } else if (focus === "bookmarked") {
-    filtered = questions.filter(q => bookmarks.includes(q.question));
-  } else {
-    filtered = questions.filter(q => q.topic === focus);
-  }
+  const filters = { topic, subcategory, difficulty, tag };
+  filtered = filterQuestions(questions, filters);
 
-  if (filtered.length === 0) {
-    console.warn("No questions match the selected focus.");
-    alert("No questions match the selected focus. Please try a different filter.");
-  }
-
-  console.log("Selected focus:", focus);
   console.log("Filtered questions:", filtered);
 
-  showAnalytics(); // Update analytics when focus changes
-  startQuiz();
+  if (filtered.length === 0) {
+    alert("No questions match the selected filters. Please try different options.");
+    return;
+  }
+
+  startQuiz(filtered); // Pass filtered questions to the quiz
 }
 
 function setQuizLength() {
   quizLength = parseInt(document.getElementById("quizLength").value);
-  startQuiz();
+  applyFocus();
 }
 
 function resetProgress() {
@@ -189,8 +263,23 @@ function resetProgress() {
 
 function toggleSettings() {
   const settings = document.getElementById("settings");
+  const allQuestionsDiv = document.getElementById("allQuestions");
+
+  if (!settings || !allQuestionsDiv) {
+    console.error("Settings or All Questions element not found.");
+    return;
+  }
+
+  // Toggle visibility of the settings section
   settings.style.display = settings.style.display === "block" ? "none" : "block";
-  if (settings.style.display === "block") showAllQuestions();
+
+  // Toggle visibility of the All Questions section
+  if (settings.style.display === "block") {
+    allQuestionsDiv.style.display = "block";
+    renderAllQuestions(); // Render all questions when the section is shown
+  } else {
+    allQuestionsDiv.style.display = "none";
+  }
 }
 
 function showAllQuestions() {
@@ -219,73 +308,45 @@ document.body.addEventListener('keydown', (e) => {
 window.onload = () => {
   const analyticsVisible = localStorage.getItem("analyticsVisible");
   const analyticsDiv = document.getElementById("analytics");
-  const toggleButton = document.getElementById("toggleAnalyticsButton");
 
   if (analyticsVisible === "true") {
     analyticsDiv.style.display = "block";
-    toggleButton.innerText = "Hide Analytics";
   } else {
     analyticsDiv.style.display = "none";
-    toggleButton.innerText = "Show Analytics";
   }
 
   startQuiz();
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM fully loaded and parsed");
+
+  // Initialize analytics
+  refreshAnalytics();
+
+  // Render all questions
+  renderAllQuestions();
+
+  // Celebration element setup
   const celebrationDiv = document.getElementById("celebration");
-
   if (celebrationDiv) {
-    console.log("Celebration element found!"); // Debugging log
     celebrationDiv.addEventListener("click", () => {
-      console.log("Celebration clicked!"); // Debugging log
-      console.log("Before hiding, display:", celebrationDiv.style.display); // Debugging log
-      celebrationDiv.style.opacity = "0"; // Optional: Add fade-out effect
+      celebrationDiv.style.opacity = "0";
       setTimeout(() => {
-        celebrationDiv.style.display = "none"; // Hide the celebration screen
-        console.log("After hiding, display:", celebrationDiv.style.display); // Debugging log
-      }, 500); // Match the transition duration if any
+        celebrationDiv.style.display = "none";
+      }, 500);
     });
-  } else {
-    console.error("Celebration element not found!");
   }
-});
 
-document.addEventListener("DOMContentLoaded", () => {
+  // Reset buttons setup
   const resetAllButton = document.getElementById("resetAllButton");
   const resetProgressButton = document.getElementById("resetProgressButton");
   const resetAnalyticsButton = document.getElementById("resetAnalyticsButton");
 
-  if (resetAllButton) {
-    resetAllButton.addEventListener("click", resetAll);
-  } else {
-    console.error("Reset All button not found!");
-  }
+  if (resetAllButton) resetAllButton.addEventListener("click", resetAll);
+  if (resetProgressButton) resetProgressButton.addEventListener("click", resetProgress);
+  if (resetAnalyticsButton) resetAnalyticsButton.addEventListener("click", resetAnalytics);
 
-  if (resetProgressButton) {
-    resetProgressButton.addEventListener("click", resetProgress);
-  } else {
-    console.error("Reset Progress button not found!");
-  }
-
-  if (resetAnalyticsButton) {
-    resetAnalyticsButton.addEventListener("click", resetAnalytics);
-  } else {
-    console.error("Reset Analytics button not found!");
-  }
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  const resetAllButton = document.getElementById("resetAllButton");
-
-  if (resetAllButton) {
-    resetAllButton.addEventListener("click", resetAll);
-  } else {
-    console.error("Reset All button not found!");
-  }
-});
-
-document.addEventListener("DOMContentLoaded", () => {
   // Automatically enable Smart Learning
   localStorage.setItem("smartLearningEnabled", "true");
   startQuiz = smartStartQuiz; // Use the Smart Learning startQuiz function
@@ -403,18 +464,11 @@ function debugAnalytics() {
   console.log("Missed Questions Object:", missedQuestions);
 }
 
+// Consolidated toggleAnalytics function
 function toggleAnalytics() {
-  const analyticsDiv = document.getElementById("analytics");
-  const toggleButton = document.getElementById("toggleAnalyticsButton");
-
-  if (analyticsDiv.style.display === "none" || analyticsDiv.style.display === "") {
-    analyticsDiv.style.display = "block";
-    toggleButton.innerText = "Hide Analytics";
-    localStorage.setItem("analyticsVisible", "true"); // Save state
-  } else {
-    analyticsDiv.style.display = "none";
-    toggleButton.innerText = "Show Analytics";
-    localStorage.setItem("analyticsVisible", "false"); // Save state
+  const analytics = document.getElementById('analytics');
+  if (analytics) {
+    analytics.style.display = analytics.style.display === 'none' ? 'block' : 'none';
   }
 }
 
@@ -425,7 +479,12 @@ function refreshAnalytics() {
   }
 }
 
-document.getElementById("toggleAnalyticsButton").addEventListener("click", toggleAnalytics);
+document.addEventListener("DOMContentLoaded", () => {
+  const viewAnalyticsButton = document.getElementById("viewAnalyticsButton");
+  if (viewAnalyticsButton) {
+    viewAnalyticsButton.addEventListener("click", toggleAnalytics);
+  }
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Analytics container:", document.getElementById("analyticsContainer"));
@@ -433,26 +492,15 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("Missed Topics Stats:", document.getElementById("missedTopicsStats"));
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Initialize analytics
-  showAnalytics();
-});
-
 function toggleBookmark(questionText) {
-  let bookmarks = JSON.parse(localStorage.getItem("bookmarks") || "[]");
-
-  if (bookmarks.includes(questionText)) {
-    // Remove the bookmark
-    bookmarks = bookmarks.filter(bookmark => bookmark !== questionText);
-    console.log(`Removed bookmark for: ${questionText}`);
-  } else {
-    // Add the bookmark
+  const index = bookmarks.indexOf(questionText);
+  if (index === -1) {
     bookmarks.push(questionText);
-    console.log(`Added bookmark for: ${questionText}`);
+  } else {
+    bookmarks.splice(index, 1);
   }
-
-  localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
-  updateBookmarkUI(questionText, bookmarks.includes(questionText));
+  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+  updateBookmarkUI(questionText, index === -1);
 }
 
 // Update the UI to reflect the bookmark state
@@ -465,23 +513,193 @@ function updateBookmarkUI(questionText, isBookmarked) {
 
 function renderAllQuestions() {
   const allQuestionsDiv = document.getElementById("allQuestions");
-  allQuestionsDiv.innerHTML = ""; // Clear any existing content
+  if (!allQuestionsDiv) {
+    console.error("Element with id 'allQuestions' not found.");
+    return;
+  }
 
-  questions.forEach((q, index) => {
-    const questionHTML = `
-      <div class="question-item">
-        <p><strong>Q${index + 1}:</strong> ${q.question}</p>
-        <ul>
-          ${q.answers.map((answer, i) => `<li>${answer}</li>`).join("")}
-        </ul>
-        <p><em>Correct Answer:</em> ${q.answers[q.correct]}</p>
-        <p><em>Topic:</em> ${q.topic}</p>
-      </div>
-    `;
-    allQuestionsDiv.innerHTML += questionHTML;
-  });
+  allQuestionsDiv.innerHTML = questions.map((q, index) => `
+    <div class="question-item">
+      <p><strong>Q${index + 1}:</strong> ${q.question}</p>
+      <ul>
+        ${q.answers.map(answer => `<li>${answer}</li>`).join('')}
+      </ul>
+      <p><em>Correct Answer:</em> ${q.answers[q.correct]}</p>
+      <p><em>Topic:</em> ${q.topic}</p>
+    </div>
+  `).join('');
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Smart Learning Button
+  const smartLearningButton = document.getElementById("smartLearningButton");
+  if (smartLearningButton) {
+    smartLearningButton.addEventListener("click", () => {
+      console.log("Smart Learning button clicked");
+      startSmartLearning(); // Call the Smart Learning function
+    });
+  }
+
+  // View Analytics Button
+  const viewAnalyticsButton = document.getElementById("viewAnalyticsButton");
+  if (viewAnalyticsButton) {
+    viewAnalyticsButton.addEventListener("click", () => {
+      console.log("View Analytics button clicked");
+      toggleAnalytics(); // Show or hide the analytics section
+    });
+  }
+
+  // Settings Button
+  const settingsButton = document.getElementById("settingsButton");
+  if (settingsButton) {
+    settingsButton.addEventListener("click", () => {
+      console.log("Settings button clicked");
+      toggleSettings(); // Show or hide the settings section
+    });
+  }
+
+  // Reset Buttons
+  const resetAllButton = document.getElementById("resetAllButton");
+  const resetProgressButton = document.getElementById("resetProgressButton");
+  const resetAnalyticsButton = document.getElementById("resetAnalyticsButton");
+
+  if (resetAllButton) resetAllButton.addEventListener("click", resetAll);
+  if (resetProgressButton) resetProgressButton.addEventListener("click", resetProgress);
+  if (resetAnalyticsButton) resetAnalyticsButton.addEventListener("click", resetAnalytics);
+});
+
+function startSmartLearning() {
+  if (typeof smartStartQuiz === "function") {
+    smartStartQuiz();
+  } else {
+    console.log("Smart Learning is not yet implemented.");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const viewAnalyticsButton = document.getElementById("viewAnalyticsButton");
+  if (viewAnalyticsButton) {
+    viewAnalyticsButton.addEventListener("click", toggleAnalytics);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const analyticsDiv = document.getElementById("analytics");
+  const viewAnalyticsButton = document.getElementById("viewAnalyticsButton");
+
+  if (viewAnalyticsButton) {
+    viewAnalyticsButton.addEventListener("click", () => {
+      if (analyticsDiv.style.display === "none" || analyticsDiv.style.display === "") {
+        analyticsDiv.style.display = "block";
+        viewAnalyticsButton.innerText = "Hide Analytics";
+      } else {
+        analyticsDiv.style.display = "none";
+        viewAnalyticsButton.innerText = "View Analytics";
+      }
+    });
+  }
+});
+
+function showCompletionMessage() {
+  alert("🎉 Quiz completed! Great job!");
+  // Optionally reset the quiz or navigate to another section
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const startQuizButton = document.getElementById("startQuizButton");
+  if (startQuizButton) {
+    startQuizButton.addEventListener("click", startQuiz);
+  }
+});
+
+// Centralized function to filter questions by topic, subcategory, difficulty, or tags
+const filterQuestions = (questions, filters) => {
+  return questions.filter((q) => {
+    const matchesTopic = filters.topic === "All" || q.topic === filters.topic;
+    const matchesSubcategory = !filters.subcategory || q.subcategory === filters.subcategory;
+    const matchesDifficulty = filters.difficulty === "All" || q.difficulty === filters.difficulty;
+    const matchesTags = !filters.tag || q.tags.includes(filters.tag);
+
+    return matchesTopic && matchesSubcategory && matchesDifficulty && matchesTags;
+  });
+};
+
+// Dynamically extract unique values for topics, subcategories, difficulties, and tags
+const getUniqueValues = (questions, key) => {
+  return [...new Set(questions.flatMap((q) => (Array.isArray(q[key]) ? q[key] : [q[key]])))];
+};
+
+// Render the dropdown for filters dynamically
+const renderDropdowns = (questions) => {
+  const topicDropdown = document.getElementById("topicDropdown");
+  const subcategoryDropdown = document.getElementById("subcategoryDropdown");
+  const difficultyDropdown = document.getElementById("difficultyDropdown");
+  const tagDropdown = document.getElementById("tagDropdown");
+
+  if (!topicDropdown || !subcategoryDropdown || !difficultyDropdown || !tagDropdown) {
+    console.error("One or more dropdown elements not found.");
+    return;
+  }
+
+  const topics = getUniqueValues(questions, "topic");
+  const subcategories = getUniqueValues(questions, "subcategory");
+  const difficulties = ["All", "Easy", "Medium", "Hard"];
+  const tags = getUniqueValues(questions, "tags");
+
+  topicDropdown.innerHTML = `
+    <option value="All">All Topics</option>
+    ${topics.map((topic) => `<option value="${topic}">${topic}</option>`).join("")}
+  `;
+
+  subcategoryDropdown.innerHTML = `
+    <option value="">All Subcategories</option>
+    ${subcategories.map((sub) => `<option value="${sub}">${sub}</option>`).join("")}
+  `;
+
+  difficultyDropdown.innerHTML = `
+    ${difficulties.map((level) => `<option value="${level}">${level}</option>`).join("")}
+  `;
+
+  tagDropdown.innerHTML = `
+    <option value="">All Tags</option>
+    ${tags.map((tag) => `<option value="${tag}">${tag}</option>`).join("")}
+  `;
+};
+
+// Simplified applyFocus function to handle multiple filters
+function applyFocus() {
+  const topic = document.getElementById("topicDropdown").value;
+  const subcategory = document.getElementById("subcategoryDropdown").value;
+  const difficulty = document.getElementById("difficultyDropdown").value;
+  const tag = document.getElementById("tagDropdown").value;
+
+  const filters = { topic, subcategory, difficulty, tag };
+  filtered = filterQuestions(questions, filters);
+
+  console.log("Filtered questions:", filtered);
+
+  if (filtered.length === 0) {
+    alert("No questions match the selected filters. Please try different options.");
+    return;
+  }
+
+  startQuiz(filtered); // Pass filtered questions to the quiz
+}
+
+// Initialize the app on DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM fully loaded and parsed");
+
+  // Dynamically generate and render the dropdowns
+  renderDropdowns(questions);
+
+  // Set up event listeners for dropdowns
+  const dropdowns = document.querySelectorAll("#topicDropdown, #subcategoryDropdown, #difficultyDropdown, #tagDropdown");
+  dropdowns.forEach((dropdown) => {
+    dropdown.addEventListener("change", applyFocus);
+  });
+
+  // Initialize analytics and render all questions
+  refreshAnalytics();
   renderAllQuestions();
 });
